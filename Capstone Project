@@ -1,0 +1,317 @@
+  -- Google Capstone Project
+
+	-- Combining all the data into one table for analysis:
+
+
+	SELECT all_data.*
+	INTO Cyclistic_data
+
+	FROM
+	(
+	SELECT *
+	FROM dbo.[202202-divvy-tripdata]
+	UNION
+	
+	SELECT *
+	FROM dbo.[202203-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202204-divvy-tripdata]
+	UNION
+	
+	SELECT *
+	FROM dbo.[202205-divvy-tripdata]
+	UNION
+		
+	SELECT *
+	FROM dbo.[202206-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202207-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202208-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202209-divvy-publictripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202210-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202211-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202212-divvy-tripdata]
+	UNION
+
+	SELECT *
+	FROM dbo.[202301-divvy-tripdata]
+	) AS all_data
+
+
+	--Analyzing the Data:
+
+
+	SELECT TOP 25 *
+	FROM Cyclistic_data
+
+	SELECT COUNT(*)
+	FROM Cyclistic_data
+	WHERE ((start_station_name IS NULL) OR (start_station_name ='')) AND  ((end_station_name IS NULL) OR (end_station_name =''))
+
+
+	SELECT TOP 10 *
+	FROM Cyclistic_data
+	WHERE ((start_station_name IS NULL) OR (start_station_name ='')) AND  ((end_station_name IS NULL) OR (end_station_name =''))
+
+
+	-- Trying to fill out the empty start station names:
+
+
+	SELECT a.start_station_name, a.start_station_id, b.start_station_name, b.start_station_id
+	FROM Cyclistic_data a
+	JOIN Cyclistic_data b
+	ON (a.start_lat = b.start_lat) AND (a.start_lng = b.start_lng) AND (a.ride_id <> b.ride_id)
+	WHERE  ((a.start_station_name IS NULL) OR (a.start_station_name ='')) AND ((a.end_station_name IS NULL) OR (a.end_station_name =''))
+
+
+	-- Creating a temp table to try to fill the missing values:
+
+	SELECT *
+	INTO #Empty_Stations
+	FROM Cyclistic_data
+	WHERE ((start_station_name IS NULL) OR (start_station_name ='')) AND  ((end_station_name IS NULL) OR (end_station_name =''))
+
+
+	SELECT b.start_station_name, b.start_station_id
+	FROM #Empty_Stations e
+	JOIN Cyclistic_data b
+	ON (e.start_lat = b.start_lat) AND (e.start_lng = b.start_lng)
+	WHERE e.ride_id <> b.ride_id
+
+	
+	-- Trying to create another table that only list the stations that Cyclistic Serves on:
+
+	SELECT DISTINCT(start_station_name) AS Station_name, start_station_id AS Station_id, start_lat AS Station_lat, start_lng AS Station_lng
+	FROM Cyclistic_data
+	UNION
+	SELECT DISTINCT(end_station_name), end_station_id, end_lat, end_lng
+	FROM Cyclistic_data
+
+
+	SELECT DISTINCT(start_station_name), start_station_id
+	FROM Cyclistic_data
+
+	
+	SELECT station.*
+	INTO Stations
+	FROM
+	(SELECT Station_name, Station_id, MAX(Station_lat) AS Station_lat, MAX(Station_lng) AS Station_lng
+FROM (
+    SELECT DISTINCT start_station_name AS Station_name, start_station_id AS Station_id, start_lat AS Station_lat, start_lng AS Station_lng
+    FROM Cyclistic_data
+    UNION
+    SELECT DISTINCT end_station_name, end_station_id, end_lat, end_lng
+    FROM Cyclistic_data
+) AS Subquery
+GROUP BY Station_name, Station_id) station
+     
+
+	 SELECT ES.start_station_name, S.Station_name
+	 FROM #Empty_Stations ES
+	 JOIN Stations S
+	 ON (ES.start_lat = S.Station_lat) AND (ES.start_lng = S.Station_lng)
+
+	-- Populating Station names:
+
+	UPDATE ES
+    SET ES.start_station_name = S.Station_name
+    FROM #Empty_Stations ES
+    JOIN Stations S
+    ON (ES.start_lat = S.Station_lat) AND (ES.start_lng = S.Station_lng)
+
+	UPDATE ES
+    SET ES.end_station_name = S.Station_name
+    FROM #Empty_Stations ES
+    JOIN Stations S
+    ON (ES.end_lat = S.Station_lat) AND (ES.end_lng = S.Station_lng)
+
+
+
+	SELECT *
+	FROM #Empty_Stations
+	ORDER BY start_lat
+
+	
+	SELECT *
+	FROM Cyclistic_data
+
+
+	-- Populating Station Names and Station Id's
+
+	UPDATE Cd
+	SET Cd.start_station_name = S.Station_name
+	FROM Cyclistic_data Cd
+	JOIN Stations S
+	ON (Cd.start_lat = S.Station_lat) AND (Cd.start_lng = S.Station_lng)
+   
+   UPDATE Cd
+	SET Cd.start_station_id = S.Station_id
+	FROM Cyclistic_data Cd
+	JOIN Stations S
+	ON (Cd.start_lat = S.Station_lat) AND (Cd.start_lng = S.Station_lng)
+
+	UPDATE Cd
+	SET Cd.end_station_name = S.Station_name
+	FROM Cyclistic_data Cd
+	JOIN Stations S
+	ON (Cd.end_lat = S.Station_lat) AND (Cd.end_lng = S.Station_lng)
+
+	UPDATE Cd
+	SET Cd.end_station_id = S.Station_id
+	FROM Cyclistic_data Cd
+	JOIN Stations S
+	ON (Cd.end_lat = S.Station_lat) AND (Cd.end_lng = S.Station_lng
+
+
+	SELECT COUNT(*)
+	FROM Cyclistic_data
+	WHERE ((start_station_name IS NULL) OR (start_station_name ='')) AND  ((end_station_name IS NULL) OR (end_station_name =''))
+
+
+	-- We have populated the empty records
+
+	SELECT Top 25 *
+	FROM Cyclistic_data
+
+
+	-- Further Cleaning of Data:
+
+
+	CREATE TABLE #time_checking (
+    start_time DATETIME,
+	end_time DATETIME );
+
+INSERT INTO #time_checking (start_time, end_time)
+VALUES ('2022-08-06 23:57:10.000', '2022-08-06 00:05:10.000')
+
+
+SELECT end_time - start_time
+FROM #time_checking
+
+
+  -- Making Data Ready for further analaysis:
+
+
+   SELECT Top 50 
+        started_at,
+        YEAR(CAST(started_at AS date)) AS Start_Year,
+        DATENAME(MONTH, CAST(started_at AS date)) AS Start_Month,
+		DATENAME(WEEKDAY, CAST(started_at AS date)) AS Week_day,
+		CASE WHEN DATENAME(WEEKDAY, CAST(started_at AS date)) ='Sunday' OR DATENAME(WEEKDAY, CAST(started_at AS date)) ='Saturday'
+		THEN 'Yes' 
+		ELSE 'No'
+		END AS Weekend,
+        DATEPART(HOUR, started_at) AS Start_Hour,
+		started_at AS Start_time,
+		ended_at AS End_time,
+        (DATEPART(HOUR, ended_at - started_at)) * 60 + DATEPART(MINUTE, ended_at - started_at) AS Trip_duration_minutes,
+        ended_at - started_at AS Trip_duration
+    FROM Cyclistic_data
+
+	SELECT analysis.*
+FROM (
+    SELECT
+        started_at,
+        YEAR(CAST(started_at AS date)) AS Start_Year,
+        DATENAME(MONTH, CAST(started_at AS date)) AS Start_Month,
+        DATEPART(HOUR, started_at) AS Start_Hour,
+		started_at AS Start_time,
+		ended_at AS End_time,
+        (DATEPART(HOUR, ended_at - started_at)) * 60 + DATEPART(MINUTE, ended_at - started_at) AS Trip_duration_minutes,
+        ended_at - started_at AS Trip_duration
+    FROM Cyclistic_data
+) AS analysis
+WHERE (Trip_duration_minutes <= 1)
+
+
+  -- Adding new columns in to the Cyclistic Tables 
+
+
+ ALTER TABLE Cyclistic_data
+  ADD Start_year int,
+      Start_month varchar(20),
+      Start_hour int,
+      Trip_duration int;
+
+
+ -- Populating Newly Created Column
+
+   SELECT TOP 25 *
+   FROM Cyclistic_data
+  
+  UPDATE Cyclistic_data
+  SET Start_year = YEAR(CAST(started_at AS date))
+
+  UPDATE Cyclistic_data
+  SET Start_month = DATENAME(MONTH, CAST(started_at AS date))
+
+  UPDATE Cyclistic_data
+  SET 
+  Start_hour = DATEPART(HOUR, started_at),
+  Trip_duration = (DATEPART(HOUR, ended_at - started_at)) * 60 + DATEPART(MINUTE, ended_at - started_at)
+  
+
+  -- Adding and Updating Some remaing Columns:
+
+  ALTER TABLE Cyclistic_data
+  ADD Weekend VARCHAR(3)
+
+  UPDATE Cyclistic_data
+  SET Weekend = CASE WHEN DATENAME(WEEKDAY, CAST(started_at AS date)) ='Sunday' OR DATENAME(WEEKDAY, CAST(started_at AS date)) ='Saturday'
+		        THEN 'Yes' 
+		        ELSE 'No'
+		        END
+
+ ALTER TABLE Cyclistic_data
+ ADD Weekday VARCHAR(20)
+
+ UPDATE Cyclistic_data
+ SET Weekday = DATENAME(WEEKDAY, CAST(started_at AS date)) 
+
+
+ -- DELETE Rows based on criteria that does not meet our analysis requirement:
+
+ DELETE Cyclistic_data
+ WHERE ([Trip_duration] <= 1)
+
+ 
+  -- Creating a Destination Table for Importing it into Tableau:
+
+
+  SELECT TOP 50 *
+  FROM Cyclistic_data
+
+  SELECT TOP 25
+               [member_casual] AS Member_type,rideable_type AS Ride_type, [Start_year], [Start_month],[Weekday],[Start_hour], [Weekend],[Trip_duration], [start_station_name] AS Start_station,[end_station_name] AS End_station
+  FROM Cyclistic_data
+
+
+  SELECT  [member_casual] AS Member_type,rideable_type AS Ride_type, [Start_year], [Start_month],[Weekday],
+          [Start_hour], [Weekend],[Trip_duration], [start_station_name] AS Start_station,[end_station_name] AS End_station
+
+  INTO Destination_table
+  FROM Cyclistic_data
+
+  --
+
+  SELECT *
+  FROM Destination_table
