@@ -311,6 +311,7 @@ WHERE (Trip_duration_minutes <= 1)
   INTO Destination_table
   FROM Cyclistic_data
 
+
   --
 
   SELECT *
