@@ -35,5 +35,6 @@ My analytical arsenal included:
 
 The crowning achievement of this project was the development of a Tableau Dashboard, fueled by the Destination table. This dashboard is designed to offer actionable insights into the bike usage patterns of casual riders and annual members. It serves as the cornerstone for crafting the company's data-driven marketing strategy.
 
-Explore the Tableau Dashboard to uncover the nuanced behaviors of our customer segments, steering us towards effective marketing tactics and increased annual memberships.
+Explore the [Tableau Dashboard](https://public.tableau.com/views/CyclisticUserBehavior_16949659323470/CyclisticDashboard?:language=en-US&:display_count=n&:origin=viz_share_link) to uncover the nuanced behaviors of our customer segments, steering us towards effective marketing tactics and increased annual memberships.
+
 
